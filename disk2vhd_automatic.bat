@@ -1,14 +1,26 @@
 REM disk2vhd_automatic.bat
-REM version 0.6
+REM version 1.1
 REM written by Tyler Francis for JelecUSA on 2015-09-08
 REM this script is designed to aid a phase in automating a cheap backup system that will perform live, full-metal backups that are then able to be quickly virtualized at a moment's notice.
 
-REM this script must be run as an Administrator, so it can spawn disk2vhd.exe with the permissions it needs to have.
+REM     __    __                 _               _ 
+REM    / / /\ \ \__ _ _ __ _ __ (_)_ __   __ _  / \
+REM    \ \/  \/ / _` | '__| '_ \| | '_ \ / _` |/  /
+REM     \  /\  / (_| | |  | | | | | | | | (_| /\_/ 
+REM      \/  \/ \__,_|_|  |_| |_|_|_| |_|\__, \/   
+REM                                      |___/     
+REM  -----------------------------------------------
+REM |  This script must be run as an Administrator  |
+REM |   so it can spawn disk2vhd.exe and diskpart   |
+REM |    with the permissions they need to have.    |
+REM  -----------------------------------------------
 
+
+timeout /t 20
 
 
 REM parse and edit the current date and time, to make it filename-friendly by replacing spaces with zeros.
-REM thanks to Alex K. for the following two lines. https://stackoverflow.com/questions/7727114/batch-command-date-and-time-in-file-name
+REM thanks to Alex K. for the following two lines, and everywhere else you see %date%, %hr%, or %time%, which is a lot. https://stackoverflow.com/questions/7727114/batch-command-date-and-time-in-file-name
 set hr=%time:~0,2%
 if "%hr:~0,1%" equ " " set hr=0%hr:~1,1%
 
@@ -41,8 +53,22 @@ set accessibility=false
 	echo. >> backup.log
 	echo. >> backup.log
 	echo. >> backup.log
+	echo.
+	echo.
+	echo.
+	echo.
+	echo whelp, this failed.
+	timeout /t 120
+	exit
 )
 
+REM assign that mysterious first partition (usually System Reserved, sometimes Recovery as well) a drive letter, so I can target it with disk2vhd, without having to copy EVERY partition.
+REM thanks to bwalraven for this diskpart hack-around. It's not perfect, but it ought to do the trick. http://forum.sysinternals.com/how-to-select-a-sys-partition-from-commandline_topic20947.html
+del dpart_start.txt
+echo sel disk 0 > dpart_start.txt
+echo sel part 1 >> dpart_start.txt
+echo assign letter=b noerr >> dpart_start.txt
+diskpart /s dpart_start.txt
 
 REM thanks to Aacini for time calculation code: https://stackoverflow.com/questions/9922498/calculate-time-difference-in-windows-batch-file
 REM Get start time:
@@ -50,12 +76,21 @@ for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
    set /A "start=(((%%a*60)+1%%b %% 100)*60+1%%c %% 100)*100+1%%d %% 100"
 )
 
-disk2vhd.exe c: "\\test-hyperv-201\c vhd repo\%host%\%host%_C_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
+disk2vhd.exe -accepteula b: c: "\\test-hyperv-201\c vhd repo\%host%\%host%_BC_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
 
 REM Get end time:
 for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
    set /A "end=(((%%a*60)+1%%b %% 100)*60+1%%c %% 100)*100+1%%d %% 100"
 )
+
+REM un-assign that first partition, lest it lose its mystique. 
+del dpart_end.txt
+echo sel disk 0 > dpart_end.txt.txt
+echo sel part 1 >> dpart_end.txt.txt
+echo remove letter=b noerr >> dpart_end.txt.txt
+diskpart /s dpart_end.txt.txt
+del dpart_start.txt
+del dpart_end.txt
 
 REM Get elapsed time:
 set /A elapsed=end-start
