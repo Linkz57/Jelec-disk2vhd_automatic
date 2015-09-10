@@ -1,21 +1,38 @@
+@echo off
 REM disk2vhd_automatic.bat
-REM version 2
+REM version 2.6
 REM written by Tyler Francis for JelecUSA on 2015-09-08
 REM this script is designed to aid a phase in automating a cheap backup system that will perform live, full-metal backups that are then able to be quickly virtualized at a moment's notice.
-
-REM   __    __                 _               _ 
-REM  / / /\ \ \__ _ _ __ _ __ (_)_ __   __ _  / \
-REM  \ \/  \/ / _` | '__| '_ \| | '_ \ / _` |/  /
-REM   \  /\  / (_| | |  | | | | | | | | (_| /\_/ 
-REM    \/  \/ \__,_|_|  |_| |_|_|_| |_|\__, \/   
-REM  ----------------------------------|___/------ 
-REM | This script must be run as an Administrator |
-REM |  so it can spawn disk2vhd.exe and diskpart  |
-REM |   with the permissions they need to have.   |
-REM  ---------------------------------------------
+echo.
+echo.
+echo.
+echo.
+echo.
+echo " " " " " " " " " " " " " " " " " " " " " " " " " " " "
+echo "     __    __                 _               _      "
+echo "    / / /\ \ \__ _ _ __ _ __ (_)_ __   __ _  / \     "
+echo "    \ \/  \/ / _` | '__| '_ \| | '_ \ / _` |/  /     "
+echo "     \  /\  / (_| | |  | | | | | | | | (_| /\_/      "
+echo "      \/  \/ \__,_|_|  |_| |_|_|_| |_|\__, \/        "
+echo "    ----------------------------------|___/------    "
+echo "   | This script must be run as an Administrator |   "
+echo "   |  so it can spawn disk2vhd.exe and diskpart  |   "
+echo "   |   with the permissions they need to have.   |   "
+echo "    ---------------------------------------------    "
+echo "                                                     "
+echo " " " " " " " " " " " " " " " " " " " " " " " " " " " "
+echo.
+echo.
+echo.
+echo.
+echo.
 
 
 timeout /t 20
+@echo on
+c:
+cd %userprofile%\Desktop
+set actualerror="This is a blank error. You should never see this, but obviously you are--right now. This means that the script has broken is new and exciting ways, and it's anyone's guess as to whether the backup was sucessful and is bootable.
 
 
 REM parse and edit the current date and time, to make it filename-friendly by replacing spaces with zeros.
@@ -56,35 +73,35 @@ REM apparently different machines have different disk layouts--who knew? Here's 
 REM I dislike hard-coding, but its not like this script will see much wide-spread use.
 REM since I can't use something like 'if host==1 || host==2', I'll just repeat these 4 lines for each server explicitly. It seems wasteful, but the Internet's suggestion of clever variable manipulation is slightly less stable and a lot more complicated. Instead, I'll just bloat up my line count, and wish I was scripting for a better shell like Bash or even PowerShell.
 if %host%==OMITTED (
-	echo sel part 2 >> dpart_start.txt
+	set mahpart=2
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	echo sel part 1 >> dpart_start.txt
+	set mahpart=1
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	echo sel part 2 >> dpart_start.txt
+	set mahpart=2
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	echo sel part 1 >> dpart_start.txt
+	set mahpart=1
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	echo sel part 1 >> dpart_start.txt
+	set mahpart=1
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	echo sel part 2 >> dpart_start.txt
+	set mahpart=2
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	echo sel part 1 >> dpart_start.txt
+	set mahpart=1
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	echo sel part 2 >> dpart_start.txt
+	set mahpart=2
 	set provisioncheck=true
 )
 
@@ -96,6 +113,7 @@ if %provisioncheck%==false (
 
 REM assign that mysterious first partition (usually System Reserved, sometimes Recovery as well) a drive letter, so I can target it with disk2vhd, without having to copy EVERY partition.
 REM thanks to bwalraven for this diskpart hack-around. It's not perfect, but it ought to do the trick. http://forum.sysinternals.com/how-to-select-a-sys-partition-from-commandline_topic20947.html
+echo sel part %mahpart% >> dpart_start.txt
 echo assign letter=b noerr >> dpart_start.txt
 diskpart /s dpart_start.txt
 
@@ -114,10 +132,10 @@ for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
 
 REM un-assign that first partition, lest it lose its mystique. 
 del dpart_end.txt
-echo sel disk 0 > dpart_end.txt.txt
-echo sel part 1 >> dpart_end.txt.txt
-echo remove letter=b noerr >> dpart_end.txt.txt
-diskpart /s dpart_end.txt.txt
+echo sel disk 0 > dpart_end.txt
+echo sel part %mahpart% >> dpart_end.txt
+echo remove letter=b noerr >> dpart_end.txt
+diskpart /s dpart_end.txt
 timeout /3
 del dpart_start.txt
 del dpart_end.txt
@@ -142,6 +160,34 @@ if %accessibility%==true (
 	echo apparently I can't write what you're now reading >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
 )
 
+@echo off
+echo.
+echo.
+echo.
+echo.
+echo.
+echo " " " " " " " " " " " " " " " " " " " " " "
+echo "    ____    ____  ___   ____    ____     "
+echo "    \   \  /   / /   \  \   \  /   /     "
+echo "     \   \/   / /  ^  \  \   \/   /      "
+echo "      \_    _/ /  /_\  \  \_    _/       "
+echo "        |  |  /  _____  \   |  |         "
+echo "        |__| /__/     \__\  |__|         "
+echo "                                         "
+echo "    You have reached the logical end     "
+echo "    of a successful script execution.    "
+echo "                                         "
+echo " " " " " " " " " " " " " " " " " " " " " "
+echo.
+echo.
+echo.
+echo.
+echo.
+
+
+timeout /t 10
+@echo on
+exit
 
 
 :fail
