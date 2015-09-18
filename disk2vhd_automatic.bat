@@ -1,6 +1,6 @@
 @echo off
 REM disk2vhd_automatic.bat
-REM version 2.6
+REM version 2.7
 REM written by Tyler Francis for JelecUSA on 2015-09-08
 REM this script is designed to aid a phase in automating a cheap backup system that will perform live, full-metal backups that are then able to be quickly virtualized at a moment's notice.
 echo.
@@ -31,7 +31,7 @@ echo.
 timeout /t 20
 @echo on
 c:
-cd %userprofile%\Desktop
+cd c:\disk2vhd_automatic
 set actualerror="This is a blank error. You should never see this, but obviously you are--right now. This means that the script has broken is new and exciting ways, and it's anyone's guess as to whether the backup was sucessful and is bootable.
 
 
@@ -46,22 +46,22 @@ REM thanks to Dave Webb for the following line. https://stackoverflow.com/questi
 FOR /F "usebackq" %%i IN (`hostname`) DO SET host=%%i
 
 
-REM this mkdir will make sure the destination exists. If this directory already exists, (which it always should, except for the first time) then it'll print "A subdirectory or file \\test-hyperv-201\c vhd repo\foo already exists." and just go on to the next line.
-mkdir "\\test-hyperv-201\c vhd repo\%host%"
+REM this mkdir will make sure the destination exists. If this directory already exists, (which it always should, except for the first time) then it'll print "A subdirectory or file \\beta-hypervcore\c-vhd-repo\foo already exists." and just go on to the next line.
+mkdir "\\beta-hypervcore\c-vhd-repo\%host%"
 
 REM log backup attempt and create something to test against before actual backup
-echo Backup's log >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-echo Stardate %date:~-4,4%/%date:~-10,2%/%date:~-7,2% >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-echo Startime %hr%:%time:~3,2%:%time:~6,2% >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-echo It begins >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-echo. >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
+echo Backup's log >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+echo Stardate %date:~-4,4%/%date:~-10,2%/%date:~-7,2% >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+echo Startime %hr%:%time:~3,2%:%time:~6,2% >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+echo It begins >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
 
 REM test backup destination for a successful write. If failed, email the authorities and make a local note of failure.
-if exist "\\test-hyperv-201\c vhd repo\%host%\backup.log" (
+if exist "\\beta-hypervcore\c-vhd-repo\%host%\backup.log" (
 	set accessibility=true
 ) else (
 	set accessibility=false
-	set actualerror="<p>The intended destination was \\test-hyperv-201\c vhd repo\%host% <br />But I could not find it.</p> I spoke into the void and said Hello hello hello... Can anybody navigate there? Just reply if you can ACK me. Is there anynas home? <br />But there is no ping I am recieving. A distant share out on the network. It's only coming through in dropped packets. My SYNs send, but it can't ACK what I'm saying."
+	set actualerror="<p>The intended destination was \\beta-hypervcore\c-vhd-repo\%host% <br />But I could not find it.</p> I spoke into the void and said Hello hello hello... Can anybody navigate there? Just reply if you can ACK me. Is there anynas home? <br />But there is no ping I am recieving. A distant share out on the network. It's only coming through in dropped packets. My SYNs send, but it can't ACK what I'm saying."
 	goto fail
 )
 
@@ -123,7 +123,7 @@ for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
    set /A "start=(((%%a*60)+1%%b %% 100)*60+1%%c %% 100)*100+1%%d %% 100"
 )
 
-disk2vhd.exe -accepteula b: c: "\\test-hyperv-201\c vhd repo\%host%\%host%_BC_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
+disk2vhd.exe -accepteula b: c: "\\beta-hypervcore\c-vhd-repo\%host%\%host%_BC_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
 
 REM Get end time:
 for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
@@ -151,13 +151,13 @@ if %cc% lss 10 set cc=0%cc%
 echo %hh%:%mm%:%ss%,%cc%
 
 if %accessibility%==true (
-	echo It finished on %date:~-4,4%/%date:~-10,2%/%date:~-7,2% at %hr%:%time:~3,2%:%time:~6,2% >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-	echo The whole System Reserved and C:\ backup took %hh% hours, %mm% minutes, and %ss% seconds to complete >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-	echo. >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-	echo. >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
-	echo. >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
+	echo It finished on %date:~-4,4%/%date:~-10,2%/%date:~-7,2% at %hr%:%time:~3,2%:%time:~6,2% >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+	echo The whole System Reserved and C:\ backup took %hh% hours, %mm% minutes, and %ss% seconds to complete >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+	echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+	echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+	echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
 ) else (
-	echo apparently I can't write what you're now reading >> "\\test-hyperv-201\c vhd repo\%host%\backup.log"
+	echo apparently I can't write what you're now reading >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
 )
 
 @echo off
