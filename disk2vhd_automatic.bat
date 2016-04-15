@@ -1,6 +1,6 @@
 @echo off
 REM disk2vhd_automatic.bat
-REM version 2.7
+REM version 2.9
 REM written by Tyler Francis for JelecUSA on 2015-09-08
 REM this script is designed to aid a phase in automating a cheap backup system that will perform live, full-metal backups that are then able to be quickly virtualized at a moment's notice.
 echo.
@@ -46,22 +46,22 @@ REM thanks to Dave Webb for the following line. https://stackoverflow.com/questi
 FOR /F "usebackq" %%i IN (`hostname`) DO SET host=%%i
 
 
-REM this mkdir will make sure the destination exists. If this directory already exists, (which it always should, except for the first time) then it'll print "A subdirectory or file \\beta-hypervcore\c-vhd-repo\foo already exists." and just go on to the next line.
-mkdir "\\beta-hypervcore\c-vhd-repo\%host%"
+REM this mkdir will make sure the destination exists. If this directory already exists, (which it always should, except for the first time) then it'll print "A subdirectory or file \\OMITTED\Shares\vhd\disk2vhd\foo already exists." and just go on to the next line.
+mkdir "\\OMITTED\Shares\vhd\disk2vhd\%host%"
 
 REM log backup attempt and create something to test against before actual backup
-echo Backup's log >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-echo Stardate %date:~-4,4%/%date:~-10,2%/%date:~-7,2% >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-echo Startime %hr%:%time:~3,2%:%time:~6,2% >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-echo It begins >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+echo Backup's log >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+echo Stardate %date:~-4,4%/%date:~-10,2%/%date:~-7,2% >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+echo Startime %hr%:%time:~3,2%:%time:~6,2% >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+echo It begins >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+echo. >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
 
 REM test backup destination for a successful write. If failed, email the authorities and make a local note of failure.
-if exist "\\beta-hypervcore\c-vhd-repo\%host%\backup.log" (
+if exist "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log" (
 	set accessibility=true
 ) else (
 	set accessibility=false
-	set actualerror="<p>The intended destination was \\beta-hypervcore\c-vhd-repo\%host% <br />But I could not find it.</p> I spoke into the void and said Hello hello hello... Can anybody navigate there? Just reply if you can ACK me. Is there anynas home? <br />But there is no ping I am recieving. A distant share out on the network. It's only coming through in dropped packets. My SYNs send, but it can't ACK what I'm saying."
+	set actualerror="<p>The intended destination was \\OMITTED\Shares\vhd\disk2vhd\%host%<br />But I could not find it.</p> I spoke into the void and said Hello hello hello... Can anybody navigate there? Just reply if you can ACK me. Is there anynas home?<br />But there is no ping I am receiving. A distant share out on the network. It's only coming through in dropped packets. My SYNs send, but it can't ACK what I'm saying."
 	goto fail
 )
 
@@ -69,6 +69,7 @@ if exist "\\beta-hypervcore\c-vhd-repo\%host%\backup.log" (
 del dpart_start.txt
 echo sel disk 0 > dpart_start.txt
 set provisioncheck=false
+set rundiskpart=true
 REM apparently different machines have different disk layouts--who knew? Here's where I do a little forking to accommodate different machines. 
 REM I dislike hard-coding, but its not like this script will see much wide-spread use.
 REM since I can't use something like 'if host==1 || host==2', I'll just repeat these 4 lines for each server explicitly. It seems wasteful, but the Internet's suggestion of clever variable manipulation is slightly less stable and a lot more complicated. Instead, I'll just bloat up my line count, and wish I was scripting for a better shell like Bash or even PowerShell.
@@ -85,29 +86,36 @@ if %host%==OMITTED (
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	set mahpart=1
+	REM set mahpart=1
+	set provisioncheck=true
+	set rundiskpart=false
+)
+if %host%==OMITTED (
+	REM set mahpart=1
+	set provisioncheck=true
+	set rundiskpart=false
+)
+if %host%==OMITTED (
+	set mahpart=2
 	set provisioncheck=true
 )
 if %host%==OMITTED (
-	set mahpart=1
+	REM set mahpart=1
 	set provisioncheck=true
+	set rundiskpart=false
 )
 if %host%==OMITTED (
 	set mahpart=2
 	set provisioncheck=true
 )
-if %host%==OMITTED (
+if %host%==tfrancis--e6530-dell-lt (
 	set mahpart=1
-	set provisioncheck=true
-)
-if %host%==OMITTED (
-	set mahpart=2
 	set provisioncheck=true
 )
 
 REM if none of those previous checks pass, that means this is running on an unknown machine. If I don't know exactly where that System Reserved/Recovery partition is, I won't be able to include it in the backup, and we'll have a useless, unbootable VHD. I'd rather have no VHD than a useless one, so let's fail instead.
 if %provisioncheck%==false (
-	set actualerror="I am running this backup script on an unknown machine. The C:\ drive might always be the C:\ drive, but the actual position of the partitions seem to be a grab-bag of options. I have attempted to assign a temporary letter to the System Reserved partition, with a hard-coded provision for each of our servers, but I do not have such a provision for this machine, the one you call %host%.<br />Instead of making a non-bootable backup of just C, I have decided not to waste the storage, cycles, and watts.<br /><br />Because there is no provision I am recieving. A distant partition out on the disk. I'm only coming through in assumptions. Your fingers type, but I can't understand what you're saying."
+	set actualerror="I am running this backup script on an unknown machine. The C:\ drive might always be the C:\ drive, but the actual position of the partitions seem to be a grab-bag of options. I have attempted to assign a temporary letter to the System Reserved partition, with a hard-coded provision for each of our servers, but I do not have such a provision for this machine, the one you call %host%.<br />Instead of making a non-bootable backup of just C, I have decided not to waste the storage, cycles, and watts."
 	goto fail
 )
 
@@ -115,7 +123,9 @@ REM assign that mysterious first partition (usually System Reserved, sometimes R
 REM thanks to bwalraven for this diskpart hack-around. It's not perfect, but it ought to do the trick. http://forum.sysinternals.com/how-to-select-a-sys-partition-from-commandline_topic20947.html
 echo sel part %mahpart% >> dpart_start.txt
 echo assign letter=b noerr >> dpart_start.txt
-diskpart /s dpart_start.txt
+if %rundiskpart%==true (
+	diskpart /s dpart_start.txt
+)
 
 REM thanks to Aacini for time calculation code: https://stackoverflow.com/questions/9922498/calculate-time-difference-in-windows-batch-file
 REM Get start time:
@@ -123,7 +133,7 @@ for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
    set /A "start=(((%%a*60)+1%%b %% 100)*60+1%%c %% 100)*100+1%%d %% 100"
 )
 
-disk2vhd.exe -accepteula b: c: "\\beta-hypervcore\c-vhd-repo\%host%\%host%_BC_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
+disk2vhd.exe -accepteula b: c: "\\OMITTED\Shares\vhd\disk2vhd\%host%\%host%_BC_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
 
 REM Get end time:
 for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
@@ -151,13 +161,13 @@ if %cc% lss 10 set cc=0%cc%
 echo %hh%:%mm%:%ss%,%cc%
 
 if %accessibility%==true (
-	echo It finished on %date:~-4,4%/%date:~-10,2%/%date:~-7,2% at %hr%:%time:~3,2%:%time:~6,2% >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-	echo The whole System Reserved and C:\ backup took %hh% hours, %mm% minutes, and %ss% seconds to complete >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-	echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-	echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
-	echo. >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+	echo It finished on %date:~-4,4%/%date:~-10,2%/%date:~-7,2% at %hr%:%time:~3,2%:%time:~6,2% >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+	echo The whole System Reserved and C:\ backup took %hh% hours, %mm% minutes, and %ss% seconds to complete >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+	echo. >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+	echo. >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
+	echo. >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
 ) else (
-	echo apparently I can't write what you're now reading >> "\\beta-hypervcore\c-vhd-repo\%host%\backup.log"
+	echo apparently I can't write what you're now reading >> "\\OMITTED\Shares\vhd\disk2vhd\%host%\backup.log"
 )
 
 @echo off
@@ -196,7 +206,7 @@ echo "Backup's log >> backup.log
 echo Stardate %date:~-4,4%/%date:~-10,2%/%date:~-7,2% >> backup.log
 echo Startime %hr%:%time:~3,2%:%time:~6,2% >> backup.log
 echo I have failed. Woe is me, a wretch of a script! %actualerror% >> backup.log
-echo When I was a subroutuine, I had a error; my STDOUT looked like two baloons. Now I've got that feeling once again. I can explain, you'd probably understand. This is now how I am: >> backup.log
+echo When I was a subroutuine, I had a error. my STDOUT looked like two baloons. Now I've got that feeling once again. I can explain, you'd probably understand. This is now how I am >> backup.log
 echo IIIIIIiiiiii... have become, uncomfortably erroneous. >> backup.log
 echo. >> backup.log
 echo. >> backup.log
