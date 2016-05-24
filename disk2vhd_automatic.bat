@@ -1,6 +1,6 @@
 @echo off
 REM disk2vhd_automatic.bat
-REM version 3.0
+REM version 3.1
 REM written by Tyler Francis for JelecUSA on 2015-09-08
 REM this script is designed to aid a phase in automating a cheap backup system that will perform live, full-metal backups that are then able to be quickly virtualized at a moment's notice.
 echo.
@@ -77,7 +77,7 @@ del temp.txt
 REM Since this language is stupid, I can't math large numbers. Instead I'm going to chop the last 6 digits off (plus the two line ending characters I think) and math this grossly rounded number instead.
 REM I want to make sure I have at least 55.6 GiB free, which should return true or fail from 32-bit integer stupidity If I have enough available.
 set chopSpace=%availableSpace:~0,-8%
-if $chopSpace% LSS 59701 (
+if %chopSpace% LSS 59701 (
 	set actualerror=There might not be enough space to store a new VHD, so I didn't try. You might be able to fit one more VHD in there, but come on. You have less than 56 GigaBytes of free space! You can't expect me to work in these conditions. You literatly have %availableSpace% Bytes available. Not a lot.
 	goto fail
 ) 
@@ -254,4 +254,4 @@ echo.
 echo.
 echo whelp, this failed.
 timeout /t 120
-REM exit
+exit
