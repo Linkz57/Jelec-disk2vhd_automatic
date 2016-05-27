@@ -2,7 +2,7 @@ So, this is a pretty neat project, if I do say so myself.
 Disk2VHD is a fantastic program written by the great Mark Russinovich of Sysinternals, now owned by Microsoft. Like many great tools, it does one thing very well. In this case, that's taking a live disk and sticking it in a VHD file. It does not clean up after itself, it is not conducive to automation or scheduling backups of machines running Windows newer than 2003 and it doesn't notify the user of successes or failures--it doesn't even keep logs. All of these are things I wanted, so I added them myself. Enter disk2vhd_automatic.bat which aims to do all of that, except the cleaning which is handled by disk2vhd_clanup.sh.
 
 # disk2vhd_automatic.bat
-This script is designed to aid a phase in automating a cheap backup system that will perform live, full-metal backups that are then able to be quickly virtualized at a moment's notice. This script is scheduled to run locally by each of the servers we want to be backed up.
+This script is designed to aid a phase in automating a cheap backup system that will perform live, bare-metal backups that are then able to be quickly virtualized at a moment's notice. This script is scheduled to run locally by each of the servers we want to be backed up.
 
 
 # disk2vhd_cleanup.sh
