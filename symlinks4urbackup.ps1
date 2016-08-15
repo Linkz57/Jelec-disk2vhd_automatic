@@ -22,7 +22,7 @@ $ignoreSmall = 214748364800
 
 
 # Now, where do we look for these VHD files?
-$vhdPath = "R:\Shares\randdvhd\HPFS"
+$vhdPath = "R:"
 
 
 # Are we dealing with VHD files?
@@ -59,10 +59,13 @@ $vhdPathBeginning = $vhdPath.SubString(0,2)
 Get-ChildItem $vhdPath | # list everything in the path specified above
 ?{ $_.PSIsContainer } | # of that list, show only folders (AKA Containers) 
 Select-Object FullName | # Show the full path of each of those folders.
+Out-String -Stream | 
+Select-String -Pattern "$extension" |
 ForEach-Object -Process {
 	$symlinkDestination = $_ | Out-String -Stream | Select-String -Pattern "$vhdPathBeginning"
 	# Clean up the empty lines from the variable we just created
-	$symlinkDestination = $symlinkDestination -creplace '(?m)^\s*\r?\n',''
+	$symlinkDestination -replace '(?m)^\s*\r?\n',''
+	$symlinkDestination -replace '[^\p{L}\p{Nd}/_/:/\-/\\]', '' # this works, but doesn't solve any problems. I thought there might be an invisible character like a line ending at the end, but now I don't think there is...
 	
 	$possibleParentsPath | ForEach-Object -Process {
 		# echo $symlinkDestination
@@ -72,7 +75,7 @@ ForEach-Object -Process {
 		# echo ""
 		# echo ""
 		cd $symlinkDestination
-		cmd /c mklink $possibleParentsName $_
+# 		cmd /c mklink $possibleParentsName $_
 	}
 }
 
