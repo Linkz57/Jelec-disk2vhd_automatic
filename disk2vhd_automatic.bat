@@ -1,6 +1,6 @@
 @echo off
 REM disk2vhd_automatic.bat
-REM version 3.4
+REM version 3.5.3
 REM written by Tyler Francis for Jelec USA on 2015-09-08
 REM this script is designed to aid a phase in automating a cheap backup system that will perform live, full-metal backups that are then able to be quickly virtualized at a moment's notice.
 echo.
@@ -52,34 +52,38 @@ REM thanks to Dave Webb for the following line. https://stackoverflow.com/questi
 FOR /F "usebackq" %%i IN (`hostname`) DO SET host=%%i
 
 
-REM this mkdir will make sure the destination exists. If this directory already exists, (which it always should, except for the first time) then it'll print "A subdirectory or file \\OMITTED\vhd\disk2vhd\foo already exists." and just go on to the next line.
-mkdir "\\OMITTED\vhd\disk2vhd\%host%"
+REM This is the folder where everything will be saved to, from logs to the actual VHD files
+set saveDir="\\OMITTED\disk2vhd"
+
+
+REM this mkdir will make sure the destination exists. If this directory already exists, (which it always should, except for the first time) then it'll print "A subdirectory or file \\hyperv-server\vhd\disk2vhd\foo already exists." and just go on to the next line.
+mkdir "%saveDir%\%host%"
 
 REM log backup attempt and create something to test against before actual backup
-echo Backup's log >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-REM echo "<br />" >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-echo Stardate %date:~-4,4%/%date:~-10,2%/%date:~-7,2% >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-REM echo "<br />" >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-echo Startime %hr%:%time:~3,2%:%time:~6,2% >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-REM echo "<br />" >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-echo It begins >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-REM echo "<br />" >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-REM echo "<br />" >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-echo. >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
+echo Backup's log >> "%saveDir%\%host%\backup.log"
+REM echo "<br />" >> "%saveDir%\%host%\backup.log"
+echo Stardate %date:~-4,4%/%date:~-10,2%/%date:~-7,2% >> "%saveDir%\%host%\backup.log"
+REM echo "<br />" >> "%saveDir%\%host%\backup.log"
+echo Startime %hr%:%time:~3,2%:%time:~6,2% >> "%saveDir%\%host%\backup.log"
+REM echo "<br />" >> "%saveDir%\%host%\backup.log"
+echo It begins >> "%saveDir%\%host%\backup.log"
+REM echo "<br />" >> "%saveDir%\%host%\backup.log"
+REM echo "<br />" >> "%saveDir%\%host%\backup.log"
+echo. >> "%saveDir%\%host%\backup.log"
 
 REM test backup destination to make sure it exists. If failed, email the authorities and make a local note of failure.
-if exist "\\OMITTED\vhd\disk2vhd\%host%\backup.log" (
+if exist "%saveDir%\%host%\backup.log" (
 	set accessibility=true
 ) else (
 	set accessibility=false
-	set actualerror=The intended destination was \\OMITTED\vhd\disk2vhd\%host% !NL!But I could not find it.
+	set actualerror=The intended destination was %saveDir%\%host% !NL!But I could not find it.
 	REM I spoke into the void and said Hello hello hello... Can anybody navigate there? Just reply if you can ACK me. Is there anynas home?<br />But there is no ping I am receiving. A distant share out on the network. It's only coming through in dropped packets. My SYNs send, but it can't ACK what I'm saying."
 	set actualErrorLevel=ERROR
 	goto fail
 )
 
 REM test backup destination for available free space. Unfortunately, this only works if the destination is a Windows machine using a single volume for VHD storage.
-wmic /node:"OMITTED" LogicalDisk Where DeviceID="E:" Get FreeSpace | find /V "FreeSpace" > temp.txt
+wmic /node:"OMITTED" LogicalDisk Where DeviceID="R:" Get FreeSpace | find /V "FreeSpace" > temp.txt
 set /P availableSpace=<temp.txt
 del temp.txt
 REM Since this language is stupid, I can't math large numbers. Instead I'm going to chop the last 6 digits off (plus the two line ending characters I think) and math this grossly rounded number instead.
@@ -141,6 +145,10 @@ if %host%==OMITTED (
 	set mahpart=1
 	set provisioncheck=true
 )
+if %host%==OMITTED (
+	set mahpart=1
+	set provisioncheck=true
+)
 
 REM if none of those previous checks pass, that means this is running on an unknown machine. If I don't know exactly where that System Reserved/Recovery partition is, I won't be able to include it in the backup, and we'll have a useless, unbootable VHD. I'd rather have no VHD than a useless one, so let's fail instead.
 if %provisioncheck%==false (
@@ -167,7 +175,7 @@ for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
    set /A "start=(((%%a*60)+1%%b %% 100)*60+1%%c %% 100)*100+1%%d %% 100"
 )
 
-disk2vhd.exe -accepteula b: c: "\\OMITTED\vhd\disk2vhd\%host%\%host%_BC_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
+disk2vhd.exe -accepteula b: c: "%saveDir%\%host%\%host%_BC_%date:~-4,4%-%date:~-10,2%-%date:~-7,2%_%hr%-%time:~3,2%-%time:~6,2%"
 
 REM Get end time:
 for /F "tokens=1-4 delims=:.," %%a in ("%time%") do (
@@ -195,14 +203,14 @@ if %cc% lss 10 set cc=0%cc%
 echo %hh%:%mm%:%ss%,%cc%
 
 if %accessibility%==true (
-	echo It finished on %date:~-4,4%/%date:~-10,2%/%date:~-7,2% at %hr%:%time:~3,2%:%time:~6,2% >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-	echo. >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-	echo The whole System Reserved and C:\ backup took %hh% hours, %mm% minutes, and %ss% seconds to complete >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-	echo. >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-	echo. >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
-	echo. >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
+	echo It finished on %date:~-4,4%/%date:~-10,2%/%date:~-7,2% at %hr%:%time:~3,2%:%time:~6,2% >> "%saveDir%\%host%\backup.log"
+	echo. >> "%saveDir%\%host%\backup.log"
+	echo The whole System Reserved and C:\ backup took %hh% hours, %mm% minutes, and %ss% seconds to complete >> "%saveDir%\%host%\backup.log"
+	echo. >> "%saveDir%\%host%\backup.log"
+	echo. >> "%saveDir%\%host%\backup.log"
+	echo. >> "%saveDir%\%host%\backup.log"
 ) else (
-	echo apparently I can't write what you're now reading. This is an illogical scenario. >> "\\OMITTED\vhd\disk2vhd\%host%\backup.log"
+	echo apparently I can't write what you're now reading. This is an illogical scenario. >> "%saveDir%\%host%\backup.log"
 )
 
 REM notify the authorities if the backup took less than 3 minutes.
@@ -216,7 +224,7 @@ if %elapsed% LSS 18000 (
 		set actualErrorLevel=Info
 		REM I'm only failing here temporarily, to receive these emails. This is the last line that does anything anyway, so I don't feel I'm missing out on the rest of the script. 
 		REM I'll comment this goto out later, and just assign these variables without ever using them, just to catch an odd failure if it happens around this area.
-		goto fail
+		REM goto fail
 	)
 )
 
@@ -272,7 +280,7 @@ echo. >> backup.log
 echo. >> backup.log
 echo. >> backup.log
 echo. >> backup.log
-type email.txt | blat -to tyler.francis@jelec.com -server 192.168.11.10 -f disk2vhd_automatic@jelec.com -subject "%actualErrorLevel%: %host% set us up the backup"
+type email.txt | blat -to tyler.francis@jelec.com -server 10.0.0.0 -f disk2vhd_automatic@jelec.com -subject "%actualErrorLevel%: %host% set us up the backup"
 echo.
 echo.
 echo.
